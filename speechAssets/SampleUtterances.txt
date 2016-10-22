@@ -1,0 +1,14 @@
+GetVersionIntent what version are you
+GetVersionIntent what are you up to
+
+
+SetColorIntent lights {ColorName}
+
+SetColorIntent turn the lights {ColorName}
+SetColorIntent to turn the lights {ColorName}
+
+SetColorIntent set the lights to {ColorName}
+SetColorIntent to set the lights to {ColorName}
+
+SetColorIntent make the lights {ColorName}
+SetColorIntent to make the lights {ColorName}

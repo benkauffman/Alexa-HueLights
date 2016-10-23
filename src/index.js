@@ -147,7 +147,7 @@ function handleColorIntentRequest(intent, session, response) {
 
     var color=intent.slots.ColorName.value.toLowerCase();
 
-    setColor("", function (result) {
+    setColor(color, function (result) {
         console.log(result);
         var speechText = '';
         if(result.status==='success')  {

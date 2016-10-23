@@ -1,6 +1,7 @@
 // bridge icon from http://www.flaticon.com/free-icon/bridge_183375
 
 var fs = require('fs');
+var colorsJson = JSON.parse(fs.readFileSync('colors.json', 'utf8'));
 
 /**
  * App ID for the skill
@@ -220,6 +221,7 @@ function setColor(color, eventCallback, apiResource) {
 
 function getQueryParam(color){
   console.log(color);
+  console.log(colors[color].r, colors[color].g, colors[color].b);
   if (color === 'white'){
     return 'r=255&g=255&b=255&i=255';
   } else if (color === 'red') {

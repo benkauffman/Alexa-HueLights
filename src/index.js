@@ -171,14 +171,14 @@ function validate(intent) {
     var allowed = [];
     for (var key in colorsJson) {
       if (colorsJson.hasOwnProperty(key)) {
-        allowed.push(key + ", ") ;
+        allowed.push(key) ;
       }
     }
 
     if (!intent || allowed.indexOf(intent.slots.ColorName.value.toLowerCase()) <= -1) {
         msg = "it appears the requested color " + intent.slots.ColorName.value.toLowerCase() + " is not listed. You can ask about";
         for (var i = 0; i < allowed.length; i++) {
-            msg += " " + allowed[i];
+            msg += ", " + allowed[i];
         }
 
         errorMessage(msg);

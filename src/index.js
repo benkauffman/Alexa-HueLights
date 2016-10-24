@@ -1,4 +1,7 @@
-// bridge icon from http://www.flaticon.com/free-icon/bridge_183375
+/**
+ * URL prefix
+ */
+var urlPrefix = 'https://05778542.ngrok.io/?';
 
 var fs = require('fs');
 var colorsJson = JSON.parse(fs.readFileSync('colors.json', 'utf8'));
@@ -19,11 +22,6 @@ var globalResponse;
  */
 var AlexaSkill = require('./AlexaSkill');
 
-/**
- * URL prefix
- */
-var urlPrefix = 'https://c120816f.ngrok.io/?';
-
 
 var LightingSkill = function() {
     AlexaSkill.call(this, APP_ID);
@@ -33,18 +31,18 @@ var LightingSkill = function() {
 LightingSkill.prototype = Object.create(AlexaSkill.prototype);
 LightingSkill.prototype.constructor = LightingSkill;
 
-LightingSkill.prototype.eventHandlers.onSessionStarted = function (sessionStartedRequest, session) {
+LightingSkill.prototype.eventHandlers.onSessionStarted = function(sessionStartedRequest, session) {
     console.log("LightingSkill onSessionStarted requestId: " + sessionStartedRequest.requestId + ", sessionId: " + session.sessionId);
 
     // any session init logic would go here
 };
 
-LightingSkill.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
+LightingSkill.prototype.eventHandlers.onLaunch = function(launchRequest, session, response) {
     console.log("LightingSkill onLaunch requestId: " + launchRequest.requestId + ", sessionId: " + session.sessionId);
     getWelcomeResponse(response);
 };
 
-LightingSkill.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest, session) {
+LightingSkill.prototype.eventHandlers.onSessionEnded = function(sessionEndedRequest, session) {
     console.log("onSessionEnded requestId: " + sessionEndedRequest.requestId + ", sessionId: " + session.sessionId);
 
     // any session cleanup logic would go here
@@ -52,13 +50,13 @@ LightingSkill.prototype.eventHandlers.onSessionEnded = function (sessionEndedReq
 
 LightingSkill.prototype.intentHandlers = {
 
-    "SetColorIntent": function (intent, session, response) {
+    "SetColorIntent": function(intent, session, response) {
         handleColorIntentRequest(intent, session, response);
     },
-    "GetVersionIntent": function (intent, session, response) {
+    "GetVersionIntent": function(intent, session, response) {
         handleVersionIntentRequest(intent, session, response);
     },
-    "AMAZON.HelpIntent": function (intent, session, response) {
+    "AMAZON.HelpIntent": function(intent, session, response) {
         var speechText = "Ask me to do something with the lights.";
         var repromptText = "Would you like to change the lights again?";
         var speechOutput = {
@@ -72,18 +70,18 @@ LightingSkill.prototype.intentHandlers = {
         response.ask(speechOutput, repromptOutput);
     },
 
-    "AMAZON.StopIntent": function (intent, session, response) {
+    "AMAZON.StopIntent": function(intent, session, response) {
         var speechOutput = {
-                speech: "Goodbye",
-                type: AlexaSkill.speechOutputType.PLAIN_TEXT
+            speech: "Goodbye",
+            type: AlexaSkill.speechOutputType.PLAIN_TEXT
         };
         response.tell(speechOutput);
     },
 
-    "AMAZON.CancelIntent": function (intent, session, response) {
+    "AMAZON.CancelIntent": function(intent, session, response) {
         var speechOutput = {
-                speech: "Goodbye",
-                type: AlexaSkill.speechOutputType.PLAIN_TEXT
+            speech: "Goodbye",
+            type: AlexaSkill.speechOutputType.PLAIN_TEXT
         };
         response.tell(speechOutput);
     }
@@ -142,120 +140,117 @@ function handleVersionIntentRequest(intent, session, response) {
 function handleColorIntentRequest(intent, session, response) {
     globalResponse = response;
 
-    if(!validate(intent)){
-      return;
+    if (!validate(intent)) {
+        return;
     }
 
-    var color=intent.slots.ColorName.value.toLowerCase();
+    var color = intent.slots.ColorName.value.toLowerCase();
 
-    setColor(color, function (result) {
+    setColor(color, function(result) {
         console.log(result);
         var speechText = '';
-        if(result.status==='success')  {
-          speechText = "Successfully set the lights " + color;
-        }else{
-          speechText = "Unable to set the lights " + color;
+        if (result.status === 'success') {
+            speechText = "Successfully set the lights " + color;
+        } else {
+            speechText = "Unable to set the lights " + color;
         }
 
-          var cardTitle="Light Adjustment";
-          var speechOutput = {
-              speech: "<speak>"+ speechText + "</speak>",
-              type: AlexaSkill.speechOutputType.SSML
-          };
-          response.tellWithCard(speechOutput, cardTitle, speechText);
-        }
-    );
+        var cardTitle = "Light Adjustment";
+        var speechOutput = {
+            speech: "<speak>" + speechText + "</speak>",
+            type: AlexaSkill.speechOutputType.SSML
+        };
+        response.tellWithCard(speechOutput, cardTitle, speechText);
+    });
 }
 
 
 
-function validate(intent){
-  allowed = ["white","red","green","blue","yellow","off","on"];
+function validate(intent) {
 
-  if(!intent || allowed.indexOf(intent.slots.ColorName.value.toLowerCase()) <= -1) {
-      msg = "it appears the requested color is not listed. You can ask about";
-      for (var i = 0; i < allowed.length; i++) {
-        msg += " " + allowed[i];
+    var allowed = [];
+    for (var key in colorsJson) {
+      if (colorsJson.hasOwnProperty(key)) {
+        allowed.push(key + ", ") ;
       }
-
-      errorMessage(msg);
-      console.log("request is NOT valid");
-      return false;
     }
 
-  console.log("request is valid for " + intent.slots.ColorName.value);
-  return true;
+    if (!intent || allowed.indexOf(intent.slots.ColorName.value.toLowerCase()) <= -1) {
+        msg = "it appears the requested color " + intent.slots.ColorName.value.toLowerCase() + " is not listed. You can ask about";
+        for (var i = 0; i < allowed.length; i++) {
+            msg += " " + allowed[i];
+        }
+
+        errorMessage(msg);
+        console.log("request is NOT valid for " + intent.slots.ColorName.value.toLowerCase());
+        return false;
+    }
+
+    console.log("request is valid for " + intent.slots.ColorName.value);
+    return true;
 }
 
 function setColor(color, eventCallback, apiResource) {
 
-  console.log("set color:" + color);
+    console.log("set color:" + color);
 
-  url = urlPrefix + getQueryParam(color);
+    url = urlPrefix + getQueryParam(color);
 
     console.log('request url: ' + url);
 
     http.get(url, function(res) {
         var body = '';
         res.on('data', function(chunk) {
-            body+=chunk;
+            body += chunk;
         });
-        res.on('end', function () {
+        res.on('end', function() {
             try {
                 console.log("request was success = " + body);
-                var jsonResult = {body:"", status:""};
+                var jsonResult = {
+                    body: "",
+                    status: ""
+                };
                 // jsonResult.body = JSON.parse(body);
-                jsonResult.status='success';
-                eventCallback( jsonResult );
-            }
-            catch(err) {
-              console.log("Got error: ", err);
-                eventCallback({status: 'error', message: body});
+                jsonResult.status = 'success';
+                eventCallback(jsonResult);
+            } catch (err) {
+                console.log("Got error: ", err);
+                eventCallback({
+                    status: 'error',
+                    message: body
+                });
             }
         });
-    }).on('error', function (e) {
+    }).on('error', function(e) {
         console.log("Got error: ", e);
         errorMessage("setting the lights to " + bridge);
     });
 }
 
-function getQueryParam(color){
-  console.log(color);
-  console.log(colors[color].r, colors[color].g, colors[color].b);
-  if (color === 'white'){
-    return 'r=255&g=255&b=255&i=255';
-  } else if (color === 'red') {
-    return  'r=255&g=0&b=0&i=255';
-  } else if (color === 'green') {
-    return  'r=0&g=100&b=0&i=255';
-  } else if (color === 'blue') {
-    return  'r=0&g=0&b=255&i=255';
-  } else if (color === 'yellow') {
-    return  'r=255&g=255&b=0&i=255';
-  } else if (color === 'off') {
-    return  'r=0&g=0&b=0&i=0';
-  } else if (color === 'on') {
-    return  'r=255&g=255&b=255&i=255';
-  }
-
-  return 'r=255&g=255&b=255&i=255';
+function getQueryParam(color) {
+    var colorObj = colorsJson[color];
+    if (colorObj) {
+        return 'r=' + colorObj.r + '&g=' + colorObj.g + '&b=' + colorObj.b + '&i=' + colorObj.i;
+    } else {
+        return 'r=255&g=255&b=255&i=255';
+    }
 }
 
 function errorMessage(errString) {
-        var speechText = "I am sorry, there was an error. " + errString;
-        var speechOutput = {
-            speech: "<speak>"+ speechText + "</speak>",
-            type: AlexaSkill.speechOutputType.SSML
-        };
-        var repromptOutput = {
-            speech: "Would you like to try and change the lighing color again?",
-            type: AlexaSkill.speechOutputType.PLAIN_TEXT
-        };
-        globalResponse.tellWithCard(speechOutput, "Error", speechText);
+    var speechText = "I am sorry, there was an error. " + errString;
+    var speechOutput = {
+        speech: "<speak>" + speechText + "</speak>",
+        type: AlexaSkill.speechOutputType.SSML
+    };
+    var repromptOutput = {
+        speech: "Would you like to try and change the lighing color again?",
+        type: AlexaSkill.speechOutputType.PLAIN_TEXT
+    };
+    globalResponse.tellWithCard(speechOutput, "Error", speechText);
 }
 
 // Create the handler that responds to the Alexa Request.
-exports.handler = function (event, context) {
+exports.handler = function(event, context) {
     // Create an instance of the HistoryBuff Skill.
     var skill = new LightingSkill();
     skill.execute(event, context);
